@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using iTextSharp.text.pdf.parser;
 using iTextSharp.text.pdf;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace Pos_Print
 {
@@ -46,7 +47,6 @@ namespace Pos_Print
         {
             
         }
-
         private void btnPrint_Click(object sender, EventArgs e)
         {
 
@@ -62,7 +62,7 @@ namespace Pos_Print
                 string printerName = "OneNote for Windows 10";
 
                 gsProcessInfo = new ProcessStartInfo();
-                gsProcessInfo.Verb = "PrintTo";
+                gsProcessInfo.Verb = "print";
                 gsProcessInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 gsProcessInfo.FileName = tempFile.Trim();
                 gsProcessInfo.Arguments = "\"" + printerName + "\"";
