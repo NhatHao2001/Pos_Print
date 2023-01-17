@@ -40,6 +40,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.txtPrinter = new System.Windows.Forms.TextBox();
+            this.btnPrintHTML = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnPrint
@@ -135,11 +136,22 @@
             this.txtPrinter.Size = new System.Drawing.Size(221, 20);
             this.txtPrinter.TabIndex = 16;
             // 
+            // btnPrintHTML
+            // 
+            this.btnPrintHTML.Location = new System.Drawing.Point(606, 148);
+            this.btnPrintHTML.Name = "btnPrintHTML";
+            this.btnPrintHTML.Size = new System.Drawing.Size(75, 23);
+            this.btnPrintHTML.TabIndex = 17;
+            this.btnPrintHTML.Text = "PrintHTML";
+            this.btnPrintHTML.UseVisualStyleBackColor = true;
+            this.btnPrintHTML.Click += new System.EventHandler(this.btnPrintHTML_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnPrintHTML);
             this.Controls.Add(this.txtPrinter);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label1);
@@ -171,6 +183,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txtPrinter;
+        private System.Windows.Forms.Button btnPrintHTML;
     }
 }
 
