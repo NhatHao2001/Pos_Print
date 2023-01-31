@@ -45,7 +45,6 @@
             this.label1.Size = new System.Drawing.Size(29, 13);
             this.label1.TabIndex = 1;
             this.label1.Text = "Host";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // label2
             // 
@@ -63,7 +62,6 @@
             this.txtHost.Size = new System.Drawing.Size(221, 20);
             this.txtHost.TabIndex = 3;
             this.txtHost.Text = "127.0.0.1";
-            this.txtHost.TextChanged += new System.EventHandler(this.txtHost_TextChanged);
             // 
             // txtPort
             // 
@@ -72,7 +70,6 @@
             this.txtPort.Size = new System.Drawing.Size(62, 20);
             this.txtPort.TabIndex = 4;
             this.txtPort.Text = "2000";
-            this.txtPort.TextChanged += new System.EventHandler(this.txtPort_TextChanged);
             // 
             // btnStart
             // 
@@ -102,7 +99,6 @@
             this.txtMessageBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtMessageBox.Size = new System.Drawing.Size(483, 300);
             this.txtMessageBox.TabIndex = 7;
-            this.txtMessageBox.TextChanged += new System.EventHandler(this.txtMessageBox_TextChanged);
             // 
             // Form1
             // 
@@ -118,7 +114,7 @@
             this.Controls.Add(this.label1);
             this.Name = "Form1";
             this.Text = "Form1";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            //this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
