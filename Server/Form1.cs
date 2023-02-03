@@ -108,28 +108,6 @@ namespace Server
                             WriteLog(base64);
                         }
 
-                        //foreach (var descendant in xElement.Descendants("image"))
-                        //{
-                        //    var base64 = xmlDoc.InnerText.ToString().Trim();
-                        //    byte[] imageBytes = Convert.FromBase64String(base64);
-                        //    var width= descendant.Attribute("width");
-                        //    var height = descendant.Attribute("height");
-                        //    var stride = int.Parse(width.Value) * 4;
-                        //    WriteableBitmap wb = new WriteableBitmap((int)width, (int)height, 96, 96, PixelFormats.Bgra32, null);
-
-                        //    // Copy the byte array to the WriteableBitmap's back buffer
-                        //    Int32Rect rect = new Int32Rect(0, 0, (int)width, (int)height);
-                        //    wb.WritePixels(rect, imageBytes, stride, 0);
-
-                        //    // Save the WriteableBitmap to a PNG file
-                        //    using (FileStream stream = new FileStream("bitmap.png", FileMode.Create))
-                        //    {
-                        //        PngBitmapEncoder encoder = new PngBitmapEncoder();
-                        //        encoder.Frames.Add(BitmapFrame.Create(wb));
-                        //        encoder.Save(stream);
-                        //    }
-                        //}
-
                         string pathImage = FolderName + "image.png";
                         string pathPDF = FolderName + "Bill.pdf";
                         ImagesToPdf(pathImage, pathPDF);
@@ -219,16 +197,6 @@ namespace Server
                 File.WriteAllBytes(pdfpath, ms.ToArray());
             }
         }
-
-        public void SaveByteArrayToFileWithFileStream(byte[] data, string filePath)
-        {
-            using (var filestream = File.OpenWrite(filePath))
-            {
-                BinaryWriter bw = new BinaryWriter(filestream);
-                bw.Write(data, 0, (int)data.Length);
-                bw.Close();
-            }
-        }
         public void Print(string printerName, string fileName)
         {
             //fileName = @"E:\bill_letter.pdf";
@@ -265,15 +233,6 @@ namespace Server
 
             });
         }
-
-        //private void Form1_Load(object sender, EventArgs e)
-        //{
-        //    server = new SimpleTcpServer();
-        //    server.Delimiter = 0x13;
-        //    server.StringEncoder = Encoding.UTF8;
-        //    server.DataReceived += Server_DataReceived;
-        //}
-
         private void btnStop_Click(object sender, EventArgs e)
         {
             isDisposited = true;
