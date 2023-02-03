@@ -35,6 +35,9 @@
             this.btnStart = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
             this.txtMessageBox = new System.Windows.Forms.TextBox();
+            this.txtUrl = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SuspendLayout();
             // 
             // label1
@@ -93,18 +96,37 @@
             // 
             // txtMessageBox
             // 
-            this.txtMessageBox.Location = new System.Drawing.Point(126, 68);
+            this.txtMessageBox.Location = new System.Drawing.Point(126, 92);
             this.txtMessageBox.Multiline = true;
             this.txtMessageBox.Name = "txtMessageBox";
             this.txtMessageBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtMessageBox.Size = new System.Drawing.Size(483, 300);
             this.txtMessageBox.TabIndex = 7;
             // 
+            // txtUrl
+            // 
+            this.txtUrl.Location = new System.Drawing.Point(126, 68);
+            this.txtUrl.Name = "txtUrl";
+            this.txtUrl.Size = new System.Drawing.Size(221, 20);
+            this.txtUrl.TabIndex = 8;
+            this.txtUrl.Text = "http://127.0.0.1:3000/cgi-bin/epos/service.cgi/";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(85, 71);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(20, 13);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "Url";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.txtUrl);
             this.Controls.Add(this.txtMessageBox);
             this.Controls.Add(this.btnStop);
             this.Controls.Add(this.btnStart);
@@ -114,7 +136,6 @@
             this.Controls.Add(this.label1);
             this.Name = "Form1";
             this.Text = "Form1";
-            //this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -129,6 +150,9 @@
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Button btnStop;
         private System.Windows.Forms.TextBox txtMessageBox;
+        private System.Windows.Forms.TextBox txtUrl;
+        private System.Windows.Forms.Label label3;
+        private System.Drawing.Printing.PrintDocument printDocument1;
     }
 }
 

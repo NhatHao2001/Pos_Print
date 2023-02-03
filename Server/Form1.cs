@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -16,6 +14,16 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
+using System.Drawing.Printing;
+using System.Drawing;
+using System.Windows.Media.Imaging;
+using System.Windows;
+using System.Windows.Media;
+using System.Text.RegularExpressions;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using iTextSharp.text.pdf.qrcode;
+using System.Web;
 
 namespace Server
 {
@@ -48,6 +56,8 @@ namespace Server
         private void StartHttpServer()
         {
             HttpListener listener = new HttpListener();
+            //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
+            //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
             listener.Prefixes.Add("http://127.0.0.1:3000/cgi-bin/epos/service.cgi/");
             WriteLog("Start listen");
             listener.Start();
@@ -81,20 +91,54 @@ namespace Server
                     
                     WriteLog(data);
                     XmlDocument xmlDoc = new XmlDocument();
+                    
                     if (!string.IsNullOrEmpty(data) && data.TrimStart().StartsWith("<?xml"))
                     {
-                        xmlDoc.LoadXml(data);
-                        var base64 = xmlDoc.InnerText.ToString();
                         string FolderName = @"E:/";
-                        string FileName = FolderName + "Bill.pdf";
-                        byte[] byteArray = Convert.FromBase64String(base64);
-                        SaveByteArrayToFileWithFileStream(byteArray, FileName);
-                        PrintDocument pdoc = new PrintDocument();
+                        xmlDoc.LoadXml(data);
+                        Regex reg = new Regex("<image width=\"([0-9]*)\" height=\"([0-9]*)\">([^<]*)</image>");
+                        if (reg.IsMatch(data))
+                        {
+                            var math = reg.Match(data);
+                            int width = int.Parse(math.Groups[1].Value);
+                            int height = int.Parse(math.Groups[2].Value);
+                            string base64 = math.Groups[3].Value;
+                            ConvertPrintDataImage(base64, width, height);
+                           
+                            WriteLog(base64);
+                        }
 
+                        //foreach (var descendant in xElement.Descendants("image"))
+                        //{
+                        //    var base64 = xmlDoc.InnerText.ToString().Trim();
+                        //    byte[] imageBytes = Convert.FromBase64String(base64);
+                        //    var width= descendant.Attribute("width");
+                        //    var height = descendant.Attribute("height");
+                        //    var stride = int.Parse(width.Value) * 4;
+                        //    WriteableBitmap wb = new WriteableBitmap((int)width, (int)height, 96, 96, PixelFormats.Bgra32, null);
+
+                        //    // Copy the byte array to the WriteableBitmap's back buffer
+                        //    Int32Rect rect = new Int32Rect(0, 0, (int)width, (int)height);
+                        //    wb.WritePixels(rect, imageBytes, stride, 0);
+
+                        //    // Save the WriteableBitmap to a PNG file
+                        //    using (FileStream stream = new FileStream("bitmap.png", FileMode.Create))
+                        //    {
+                        //        PngBitmapEncoder encoder = new PngBitmapEncoder();
+                        //        encoder.Frames.Add(BitmapFrame.Create(wb));
+                        //        encoder.Save(stream);
+                        //    }
+                        //}
+
+                        string pathImage = FolderName + "image.png";
+                        string pathPDF = FolderName + "Bill.pdf";
+                        ImagesToPdf(pathImage, pathPDF);
+                        PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.PrinterSettings.PrinterName = "ZJ-58";
                         pdoc.DefaultPageSettings.Landscape = true;
                         pdoc.DefaultPageSettings.PaperSize = new PaperSize("custom", 104, 140);
-                        Print(pdoc.PrinterSettings.PrinterName, FileName);
+                        
+                        Print(pdoc.PrinterSettings.PrinterName, pathPDF);
                     }
 
                 }
@@ -106,6 +150,74 @@ namespace Server
             Stream output = response.OutputStream;
             output.Write(buffer, 0, buffer.Length);
             output.Close();
+        }
+
+        public void ConvertPrintDataImage(string base64String, int width, int height)
+        {
+            byte[] data = Convert.FromBase64String(base64String);
+            //int width = 100; // set the width of the bitmap
+            //int height = 100; // set the height of the bitmap
+            int stride = width * 4; // calculate the stride
+
+            Bitmap bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            Rectangle rect = new Rectangle(0, 0, width, height);
+            BitmapData bitmapData = bitmap.LockBits(rect, ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            IntPtr scan0 = bitmapData.Scan0;
+            unsafe
+            {
+                byte* p = (byte*)scan0.ToPointer();
+
+                int index = 0;
+                for (int y = 0; y < height; y++)
+                {
+
+                    for (int x = 0; x < width; x++)
+                    {
+                        try
+                        {
+                            byte v = data[index / 2];
+                            if (v > 180) v = 255;
+                            if (v < 120) v = 0;
+                            p[0] = v;
+                            p[1] = v;
+                            p[2] = v;
+                            p[3] = 255;
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                        index++;
+                        p += 4;
+                    }
+                    p += bitmapData.Stride - width * 4;
+                }
+            }
+            bitmap.UnlockBits(bitmapData);
+
+            bitmap.Save("E:/image.png", ImageFormat.Png);
+        }
+        public void ImagesToPdf(string imagepaths, string pdfpath)
+        {
+            iTextSharp.text.Rectangle pageSize = null;
+
+            using (var srcImage = new Bitmap(imagepaths.ToString()))
+            {
+                pageSize = new iTextSharp.text.Rectangle(0, 0, srcImage.Width, srcImage.Height);
+            }
+
+            using (var ms = new MemoryStream())
+            {
+                var document = new iTextSharp.text.Document(pageSize, 0, 0, 0, 0);
+                iTextSharp.text.pdf.PdfWriter.GetInstance(document, ms).SetFullCompression();
+                document.Open();
+                var image = iTextSharp.text.Image.GetInstance(imagepaths.ToString());
+                document.Add(image);
+                document.Close();
+
+                File.WriteAllBytes(pdfpath, ms.ToArray());
+            }
         }
 
         public void SaveByteArrayToFileWithFileStream(byte[] data, string filePath)
@@ -127,7 +239,7 @@ namespace Server
                 //printerName = "OneNote for Windows 10";
 
                 gsProcessInfo = new ProcessStartInfo();
-                gsProcessInfo.Verb = "PrintTo";
+                gsProcessInfo.Verb = "Print";
                 gsProcessInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 gsProcessInfo.FileName = fileName.Trim();
                 gsProcessInfo.Arguments = "\"" + printerName + "\"";
@@ -167,5 +279,7 @@ namespace Server
             isDisposited = true;
             WriteLog("Stopping...");
         }
+
+       
     }
 }
