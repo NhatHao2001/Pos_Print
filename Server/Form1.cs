@@ -58,14 +58,16 @@ namespace Server
             HttpListener listener = new HttpListener();
             //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
             //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
-            listener.Prefixes.Add("http://127.0.0.1:3000/cgi-bin/epos/service.cgi/");
+            listener.Prefixes.Add(txtHost.Text+":"+txtPort.Text+"/"+txtUrl.Text);
             WriteLog("Start listen");
             listener.Start();
             while (!isDisposited)
             {
 
                 HttpListenerContext context = listener.GetContext();
-
+                HttpListenerTimeoutManager manager = listener.TimeoutManager;
+                manager.IdleConnection = TimeSpan.FromMinutes(1);
+                manager.HeaderWait = TimeSpan.FromMinutes(1);
                 //Can create a thread here to process request parallel
                 ProcessRequest(context);
 
@@ -94,7 +96,7 @@ namespace Server
                     
                     if (!string.IsNullOrEmpty(data) && data.TrimStart().StartsWith("<?xml"))
                     {
-                        string FolderName = @"E:/";
+                        
                         xmlDoc.LoadXml(data);
                         Regex reg = new Regex("<image width=\"([0-9]*)\" height=\"([0-9]*)\">([^<]*)</image>");
                         if (reg.IsMatch(data))
@@ -105,16 +107,14 @@ namespace Server
                             string base64 = math.Groups[3].Value;
                             ConvertPrintDataImage(base64, width, height);
                            
-                            WriteLog(base64);
+                            //WriteLog(base64);
                         }
-
-                        string pathImage = FolderName + "image.png";
-                        string pathPDF = FolderName + "Bill.pdf";
+                        string pathImage = Application.StartupPath + @"\assets\image\image.png";
+                        string pathPDF = Application.StartupPath + @"\assets\pdf\Bill.pdf";
                         ImagesToPdf(pathImage, pathPDF);
                         PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.PrinterSettings.PrinterName = "ZJ-58";
                         pdoc.DefaultPageSettings.Landscape = true;
-                        pdoc.DefaultPageSettings.PaperSize = new PaperSize("custom", 104, 140);
                         
                         Print(pdoc.PrinterSettings.PrinterName, pathPDF);
                     }
@@ -174,7 +174,7 @@ namespace Server
             }
             bitmap.UnlockBits(bitmapData);
 
-            bitmap.Save("E:/image.png", ImageFormat.Png);
+            bitmap.Save(Application.StartupPath + @"\assets\image\image.png", ImageFormat.Png);
         }
         public void ImagesToPdf(string imagepaths, string pdfpath)
         {

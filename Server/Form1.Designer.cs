@@ -64,7 +64,7 @@
             this.txtHost.Name = "txtHost";
             this.txtHost.Size = new System.Drawing.Size(221, 20);
             this.txtHost.TabIndex = 3;
-            this.txtHost.Text = "127.0.0.1";
+            this.txtHost.Text = "http://127.0.0.1";
             // 
             // txtPort
             // 
@@ -72,7 +72,7 @@
             this.txtPort.Name = "txtPort";
             this.txtPort.Size = new System.Drawing.Size(62, 20);
             this.txtPort.TabIndex = 4;
-            this.txtPort.Text = "2000";
+            this.txtPort.Text = "3000";
             // 
             // btnStart
             // 
@@ -109,7 +109,7 @@
             this.txtUrl.Name = "txtUrl";
             this.txtUrl.Size = new System.Drawing.Size(221, 20);
             this.txtUrl.TabIndex = 8;
-            this.txtUrl.Text = "http://127.0.0.1:3000/cgi-bin/epos/service.cgi/";
+            this.txtUrl.Text = "cgi-bin/epos/service.cgi/";
             // 
             // label3
             // 
