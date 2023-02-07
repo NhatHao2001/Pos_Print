@@ -1,5 +1,4 @@
-﻿using SimpleTCP;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,7 +8,6 @@ using System.Linq;
 using System.Net;
 using System.Security.AccessControl;
 using System.Text;
-using System.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -25,43 +23,29 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using iTextSharp.text.pdf.qrcode;
 using System.Web;
+using System.Configuration;
 using System.Printing;
 using Server.Models;
 
 namespace Server
 {
-    public partial class Form1 : Form
+    public class PrintPos
     {
-        SimpleTcpServer server;
         bool isDisposited = false;
-        Printer printer = new Printer();
-        List<Printer> ListPrinter = new List<Printer>();
-        public Form1()
+        public void run()
         {
-            InitializeComponent();
-        }
-
-
-        private void btnStart_Click(object sender, EventArgs e)
-        {
-            Thread t = new Thread(new ThreadStart(StartHttpServer));
+            Thread t = new Thread(new ThreadStart(onStart));
             t.Start();
-
-            //PrintPos printPos = new PrintPos();
-            //printPos.run();
+            Console.WriteLine("Start listen");
         }
-        
-
-        private void StartHttpServer()
+        public void onStart()
         {
             string host = ConfigurationManager.AppSettings["Host"];
             string port = ConfigurationManager.AppSettings["Port"];
             string url = ConfigurationManager.AppSettings["Url"];
             HttpListener listener = new HttpListener();
-            //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
-            //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
-            listener.Prefixes.Add(host + ":"+port+url);
-            WriteLog("Start listen");
+            listener.Prefixes.Add(host + ":" + port + url);
+
             listener.Start();
             while (!isDisposited)
             {
@@ -76,7 +60,6 @@ namespace Server
             }
             listener.Stop();
         }
-
         private void ProcessRequest(HttpListenerContext context)
         {
             HttpListenerRequest request = context.Request;
@@ -85,18 +68,20 @@ namespace Server
             response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
             response.Headers.Add("Access-Control-Allow-Headers", "*");
             string devid = request.QueryString["devid"];
-            WriteLog(devid);
+
             if (request.HasEntityBody)
             {
                 using (StreamReader reader = new StreamReader(request.InputStream, request.ContentEncoding))
                 {
                     string data = reader.ReadToEnd();
-                    //WriteLog(data);
+                    // Process the received string data
+
+                    Console.WriteLine(data);
                     XmlDocument xmlDoc = new XmlDocument();
-                    
+
                     if (!string.IsNullOrEmpty(data) && data.TrimStart().StartsWith("<?xml"))
                     {
-                        
+
                         xmlDoc.LoadXml(data);
                         Regex reg = new Regex("<image width=\"([0-9]*)\" height=\"([0-9]*)\">([^<]*)</image>");
                         if (reg.IsMatch(data))
@@ -105,33 +90,18 @@ namespace Server
                             int width = int.Parse(math.Groups[1].Value);
                             int height = int.Parse(math.Groups[2].Value);
                             string base64 = math.Groups[3].Value;
-
                             ConvertPrintDataImage(base64, width, height);
 
-                            //WriteLog(base64);
+                            Console.WriteLine(base64);
                         }
-                        string pathImage = Application.StartupPath + @"\assets\image\image.png";
-                        string pathPDF = Application.StartupPath + @"\assets\pdf\Bill.pdf";
-                        string port = ConfigurationManager.AppSettings["Port"];
+                        string pathImage = @"E:\image.png";
+                        string pathPDF = @"E:\Bill.pdf";
                         ImagesToPdf(pathImage, pathPDF);
                         PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.Landscape = true;
-                        using (LocalPrintServer printServer = new LocalPrintServer())
-                        {
-                            PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
-                            foreach (PrintQueue pq in printQueuesOnLocalServer)
-                            {
-                                if(port == "3000" && pq.Name.Equals("ZJ-58"))
-                                {
-                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                }else if(port == "3001" && pq.Name.Equals("OneNote for Windows 10"))
-                                {
-                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                }
-                            }
-                        }
-                        
-                        Print(pdoc.DefaultPageSettings.PrinterSettings.PrinterName, pathImage);
+                        pdoc.PrinterSettings.PrinterName = "OneNote for Windows 10";
+
+                        Print(pdoc.PrinterSettings.PrinterName, pathPDF);
                     }
 
                 }
@@ -144,7 +114,6 @@ namespace Server
             output.Write(buffer, 0, buffer.Length);
             output.Close();
         }
-
         public void ConvertPrintDataImage(string base64String, int width, int height)
         {
             byte[] data = Convert.FromBase64String(base64String);
@@ -170,8 +139,8 @@ namespace Server
                         try
                         {
                             byte v = data[index / 2];
-                            //if (v > 180) v = 255;
-                            //if (v < 120) v = 0;
+                            if (v > 180) v = 255;
+                            if (v < 120) v = 0;
                             p[0] = v;
                             p[1] = v;
                             p[2] = v;
@@ -189,7 +158,7 @@ namespace Server
             }
             bitmap.UnlockBits(bitmapData);
 
-            bitmap.Save(Application.StartupPath + @"\assets\image\image.png", ImageFormat.Png);
+            bitmap.Save(@"E:\image.png", ImageFormat.Png);
         }
         public void ImagesToPdf(string imagepaths, string pdfpath)
         {
@@ -214,22 +183,20 @@ namespace Server
         }
         public void Print(string printerName, string fileName)
         {
-            //fileName = @"E:\bill_letter.pdf";
             try
             {
                 ProcessStartInfo gsProcessInfo;
                 Process gsProcess;
-                //printerName = "OneNote for Windows 10";
 
                 gsProcessInfo = new ProcessStartInfo();
+                gsProcessInfo.CreateNoWindow = false;
+                gsProcessInfo.UseShellExecute = false;
                 gsProcessInfo.Verb = "PrintTo";
                 gsProcessInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 gsProcessInfo.FileName = fileName.Trim();
                 gsProcessInfo.Arguments = "\"" + printerName + "\"";
 
                 gsProcess = Process.Start(gsProcessInfo);
-
-                gsProcess.EnableRaisingEvents = true;
 
                 gsProcess.Close();
             }
@@ -238,22 +205,10 @@ namespace Server
                 Console.WriteLine(ex);
             }
         }
-
-        private void WriteLog(string message)
+        public void onStop(bool _isDisposited)
         {
-            txtMessageBox.Invoke((MethodInvoker)delegate ()
-            {
-
-                txtMessageBox.Text += System.Environment.NewLine + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss tt") + message;
-
-            });
+            _isDisposited = true;
+            isDisposited = _isDisposited;
         }
-        private void btnStop_Click(object sender, EventArgs e)
-        {
-            isDisposited = true;
-            WriteLog("Stopping...");
-        }
-
-       
     }
 }
