@@ -52,20 +52,18 @@ namespace Print_Service
         {
             string host = ConfigurationManager.AppSettings["Host"];
             string port = ConfigurationManager.AppSettings["Port"];
-            string port2 = ConfigurationManager.AppSettings["Port2"];
             string url = ConfigurationManager.AppSettings["Url"];
-            HttpListener listener = new HttpListener();
-            listener.Prefixes.Add(host + ":" + port + url);
-
-            listener.Start();
-            new Thread(() => HandleRequests(listener)).Start();
-
-            HttpListener listener2 = new HttpListener();
-            listener2.Prefixes.Add(host + ":" + port2 + url);
-
-            listener2.Start();
-            new Thread(() => HandleRequests(listener2)).Start();
-            
+            LocalPrintServer localPrintServer = new LocalPrintServer();
+            PrintQueueCollection printQueues = localPrintServer.GetPrintQueues();
+            for (int i = 0; i < printQueues.Count(); i++)
+            {
+                HttpListener listener = new HttpListener();
+                //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
+                //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
+                listener.Prefixes.Add(host + ":" + port + i + url);
+                listener.Start();
+                new Thread(() => HandleRequests(listener)).Start();
+            }
         }
         public void HandleRequests(HttpListener listener)
         {
@@ -122,6 +120,7 @@ namespace Print_Service
                         }
                         string pathImage = @"E:\image.png";
                         string pathPDF = @"E:\Bill.pdf";
+                        string port = ConfigurationManager.AppSettings["Port"];
                         //ImagesToPdf(pathImage, pathPDF);
                         PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.Landscape = true;
@@ -131,16 +130,18 @@ namespace Print_Service
                             PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
                             foreach (PrintQueue pq in printQueuesOnLocalServer)
                             {
-                                if (request.LocalEndPoint.Port == 3000 && pq.Name.Equals("ZJ-58"))
+                                for (int i = 0; i < printQueuesOnLocalServer.Count(); i++)
                                 {
-                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                    Print(pdoc.DefaultPageSettings.PrinterSettings.PrinterName, pathImage);
+                                    if (request.LocalEndPoint.Port == (int.Parse(port) * 10) + i)
+                                    {
+                                        pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
                                 }
-                                else if (request.LocalEndPoint.Port == 3001 && pq.Name.Equals("OneNote for Windows 10"))
-                                {
-                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                    Print(pdoc.DefaultPageSettings.PrinterSettings.PrinterName, pathImage);
-                                }
+
                             }
                         }
 

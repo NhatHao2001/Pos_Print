@@ -57,22 +57,19 @@ namespace Server
         {
             string host = ConfigurationManager.AppSettings["Host"];
             string port = ConfigurationManager.AppSettings["Port"];
-            string port2 = ConfigurationManager.AppSettings["Port2"];
             string url = ConfigurationManager.AppSettings["Url"];
-            HttpListener listener = new HttpListener();
-            //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
-            //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
-            listener.Prefixes.Add(host + ":"+port+url);
-            WriteLog("Start listen");
-            listener.Start();
-            new Thread(() => HandleRequests(listener)).Start();
-            
-            HttpListener listener2 = new HttpListener();
-            listener2.Prefixes.Add(host + ":" + port2 + url);
-            WriteLog("Start listen");
-            listener2.Start();
-            new Thread(() => HandleRequests(listener2)).Start();
-            
+            LocalPrintServer localPrintServer = new LocalPrintServer();
+            PrintQueueCollection printQueues = localPrintServer.GetPrintQueues();
+            for(int i = 0; i < printQueues.Count(); i++)
+            {
+                HttpListener listener = new HttpListener();
+                //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
+                //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
+                listener.Prefixes.Add(host + ":" +port+i + url);
+                WriteLog("Start listen");
+                listener.Start();
+                new Thread(() => HandleRequests(listener)).Start();
+            }      
         }
         public void HandleRequests(HttpListener listener)
         {
@@ -123,7 +120,8 @@ namespace Server
                         string pathImage = Application.StartupPath + @"\assets\image\image.png";
                         string pathPDF = Application.StartupPath + @"\assets\pdf\Bill.pdf";
                         string port = ConfigurationManager.AppSettings["Port"];
-                        ImagesToPdf(pathImage, pathPDF);
+
+                        //ImagesToPdf(pathImage, pathPDF);
                         PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.Landscape = true;
                         using (LocalPrintServer printServer = new LocalPrintServer())
@@ -131,13 +129,18 @@ namespace Server
                             PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
                             foreach (PrintQueue pq in printQueuesOnLocalServer)
                             {
-                                if(request.LocalEndPoint.Port == 3000 && pq.Name.Equals("ZJ-58"))
+                                for (int i = 0; i < printQueuesOnLocalServer.Count(); i++)
                                 {
-                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                }else if(request.LocalEndPoint.Port == 3001 && pq.Name.Equals("OneNote for Windows 10"))
-                                {
-                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
+                                    if (request.LocalEndPoint.Port == (int.Parse(port)*10)+i)
+                                    {
+                                        pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
                                 }
+                                
                             }
                         }
                         
