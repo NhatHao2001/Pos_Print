@@ -38,9 +38,11 @@ namespace Print_Service
         {
             try
             {
-                worker = new Thread(new ThreadStart(onStart));
-                worker.Start();
-
+                string host = ConfigurationManager.AppSettings["Host"];
+                string port = ConfigurationManager.AppSettings["Port"];
+                string port2 = ConfigurationManager.AppSettings["Port2"];
+                string url = ConfigurationManager.AppSettings["Url"];
+                onListener(host,port,url);
             }
             catch (Exception ex)
             {
@@ -48,11 +50,9 @@ namespace Print_Service
             }
             
         }
-        public void onStart()
+        public void onListener(string host, string port, string url)
         {
-            string host = ConfigurationManager.AppSettings["Host"];
-            string port = ConfigurationManager.AppSettings["Port"];
-            string url = ConfigurationManager.AppSettings["Url"];
+            
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add(host + ":" + port + url);
 
@@ -171,8 +171,8 @@ namespace Print_Service
                         try
                         {
                             byte v = data[index / 2];
-                            //if (v > 180) v = 255;
-                            //if (v < 120) v = 0;
+                            if (v > 240) v = 255;
+                            if (v < 230) v = 0;
                             p[0] = v;
                             p[1] = v;
                             p[2] = v;
