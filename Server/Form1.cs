@@ -27,6 +27,7 @@ using iTextSharp.text.pdf.qrcode;
 using System.Web;
 using System.Printing;
 using Server.Models;
+using System.Web.UI.WebControls.WebParts;
 
 namespace Server
 {
@@ -56,6 +57,7 @@ namespace Server
         {
             string host = ConfigurationManager.AppSettings["Host"];
             string port = ConfigurationManager.AppSettings["Port"];
+            string port2 = ConfigurationManager.AppSettings["Port2"];
             string url = ConfigurationManager.AppSettings["Url"];
             HttpListener listener = new HttpListener();
             //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
@@ -63,20 +65,28 @@ namespace Server
             listener.Prefixes.Add(host + ":"+port+url);
             WriteLog("Start listen");
             listener.Start();
+            new Thread(() => HandleRequests(listener)).Start();
+            
+            HttpListener listener2 = new HttpListener();
+            listener2.Prefixes.Add(host + ":" + port2 + url);
+            WriteLog("Start listen");
+            listener2.Start();
+            new Thread(() => HandleRequests(listener2)).Start();
+            
+        }
+        public void HandleRequests(HttpListener listener)
+        {
             while (!isDisposited)
             {
-
                 HttpListenerContext context = listener.GetContext();
                 HttpListenerTimeoutManager manager = listener.TimeoutManager;
                 manager.IdleConnection = TimeSpan.FromMinutes(1);
                 manager.HeaderWait = TimeSpan.FromMinutes(1);
                 //Can create a thread here to process request parallel
                 ProcessRequest(context);
-
             }
             listener.Stop();
         }
-
         private void ProcessRequest(HttpListenerContext context)
         {
             HttpListenerRequest request = context.Request;
@@ -121,10 +131,10 @@ namespace Server
                             PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
                             foreach (PrintQueue pq in printQueuesOnLocalServer)
                             {
-                                if(port == "3000" && pq.Name.Equals("ZJ-58"))
+                                if(request.LocalEndPoint.Port == 3000 && pq.Name.Equals("ZJ-58"))
                                 {
                                     pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                }else if(port == "3001" && pq.Name.Equals("OneNote for Windows 10"))
+                                }else if(request.LocalEndPoint.Port == 3001 && pq.Name.Equals("OneNote for Windows 10"))
                                 {
                                     pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
                                 }

@@ -38,11 +38,9 @@ namespace Print_Service
         {
             try
             {
-                string host = ConfigurationManager.AppSettings["Host"];
-                string port = ConfigurationManager.AppSettings["Port"];
-                string port2 = ConfigurationManager.AppSettings["Port2"];
-                string url = ConfigurationManager.AppSettings["Url"];
-                onListener(host,port,url);
+                worker = new Thread(new ThreadStart(onStart));
+                worker.Start();
+
             }
             catch (Exception ex)
             {
@@ -50,26 +48,39 @@ namespace Print_Service
             }
             
         }
-        public void onListener(string host, string port, string url)
+        public void onStart()
         {
-            
+            string host = ConfigurationManager.AppSettings["Host"];
+            string port = ConfigurationManager.AppSettings["Port"];
+            string port2 = ConfigurationManager.AppSettings["Port2"];
+            string url = ConfigurationManager.AppSettings["Url"];
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add(host + ":" + port + url);
 
             listener.Start();
+            new Thread(() => HandleRequests(listener)).Start();
+
+            HttpListener listener2 = new HttpListener();
+            listener2.Prefixes.Add(host + ":" + port2 + url);
+
+            listener2.Start();
+            new Thread(() => HandleRequests(listener2)).Start();
+            
+        }
+        public void HandleRequests(HttpListener listener)
+        {
             while (!isDisposited)
             {
-
                 HttpListenerContext context = listener.GetContext();
                 HttpListenerTimeoutManager manager = listener.TimeoutManager;
                 manager.IdleConnection = TimeSpan.FromMinutes(1);
                 manager.HeaderWait = TimeSpan.FromMinutes(1);
                 //Can create a thread here to process request parallel
                 ProcessRequest(context);
-
             }
             listener.Stop();
         }
+
         private void ProcessRequest(HttpListenerContext context)
         {
             HttpListenerRequest request = context.Request;
@@ -111,8 +122,7 @@ namespace Print_Service
                         }
                         string pathImage = @"E:\image.png";
                         string pathPDF = @"E:\Bill.pdf";
-                        string port = ConfigurationManager.AppSettings["Port"];
-                        ImagesToPdf(pathImage, pathPDF);
+                        //ImagesToPdf(pathImage, pathPDF);
                         PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.Landscape = true;
 
@@ -121,19 +131,20 @@ namespace Print_Service
                             PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
                             foreach (PrintQueue pq in printQueuesOnLocalServer)
                             {
-                                if (port == "3000" && pq.Name.Equals("ZJ-58"))
+                                if (request.LocalEndPoint.Port == 3000 && pq.Name.Equals("ZJ-58"))
                                 {
                                     pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
+                                    Print(pdoc.DefaultPageSettings.PrinterSettings.PrinterName, pathImage);
                                 }
-                                else if (port == "3001" && pq.Name.Equals("OneNote for Windows 10"))
+                                else if (request.LocalEndPoint.Port == 3001 && pq.Name.Equals("OneNote for Windows 10"))
                                 {
                                     pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
+                                    Print(pdoc.DefaultPageSettings.PrinterSettings.PrinterName, pathImage);
                                 }
                             }
                         }
-                        pdoc.PrinterSettings.PrinterName = "ZJ-58";
 
-                        Print(pdoc.PrinterSettings.PrinterName, pathPDF);
+                        
                     }
 
                 }
