@@ -60,16 +60,16 @@ namespace Server
             string url = ConfigurationManager.AppSettings["Url"];
             LocalPrintServer localPrintServer = new LocalPrintServer();
             PrintQueueCollection printQueues = localPrintServer.GetPrintQueues();
-            for(int i = 0; i < printQueues.Count(); i++)
+            for (int i = 0; i < printQueues.Count(); i++)
             {
                 HttpListener listener = new HttpListener();
                 //http://127.0.0.1:3000/cgi-bin/eposDisp/service.cgi/
                 //http://127.0.0.1:3000/cgi-bin/epos/service.cgi/
-                listener.Prefixes.Add(host + ":" +port+i + url);
+                listener.Prefixes.Add(host + ":" + port + i + url);
                 WriteLog("Start listen");
                 listener.Start();
                 new Thread(() => HandleRequests(listener)).Start();
-            }      
+            }
         }
         public void HandleRequests(HttpListener listener)
         {
@@ -119,31 +119,45 @@ namespace Server
                         }
                         string pathImage = Application.StartupPath + @"\assets\image\image.png";
                         string pathPDF = Application.StartupPath + @"\assets\pdf\Bill.pdf";
-                        string port = ConfigurationManager.AppSettings["Port"];
+                        string[] PrinterValue = ConfigurationManager.AppSettings.AllKeys;
 
                         //ImagesToPdf(pathImage, pathPDF);
                         PrintDocument pdoc = new PrintDocument();
                         pdoc.DefaultPageSettings.Landscape = true;
-                        using (LocalPrintServer printServer = new LocalPrintServer())
+                        //using (LocalPrintServer printServer = new LocalPrintServer())
+                        //{
+                        //    PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
+                        //    foreach (PrintQueue pq in printQueuesOnLocalServer)
+                        //    {
+                        //        for (int i = 0; i < printQueuesOnLocalServer.Count(); i++)
+                        //        {
+                        //            if (request.LocalEndPoint.Port == (int.Parse(port)*10)+i)
+                        //            {
+                        //                pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
+                        //            }
+                        //            else
+                        //            {
+                        //                break;
+                        //            }
+                        //        }
+
+                        //    }
+                        //}
+                        foreach(var item in PrinterValue)
                         {
-                            PrintQueueCollection printQueuesOnLocalServer = printServer.GetPrintQueues();
-                            foreach (PrintQueue pq in printQueuesOnLocalServer)
+                            item.Split('.');
+                            if (item[0].Equals("Printer"))
                             {
-                                for (int i = 0; i < printQueuesOnLocalServer.Count(); i++)
+                                var value = ConfigurationManager.AppSettings[item];
+                                string[] Numpart = value.Split(':');
+                                if (request.LocalEndPoint.Port == int.Parse(Numpart[0]))
                                 {
-                                    if (request.LocalEndPoint.Port == (int.Parse(port)*10)+i)
-                                    {
-                                        pdoc.DefaultPageSettings.PrinterSettings.PrinterName = pq.Name;
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
+                                    pdoc.DefaultPageSettings.PrinterSettings.PrinterName = Numpart[1];
                                 }
-                                
                             }
+                            
                         }
-                        
+                        pdoc.DefaultPageSettings.PrinterSettings.PrinterName = "ZJ-58";
                         Print(pdoc.DefaultPageSettings.PrinterSettings.PrinterName, pathImage);
                     }
 
