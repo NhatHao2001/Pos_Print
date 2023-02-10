@@ -145,10 +145,10 @@ namespace Server
                         //}
                         foreach(var item in PrinterValue)
                         {
-                            item.Split('.');
+                            var value = ConfigurationManager.AppSettings[item];
+                            var port = ConfigurationManager.AppSettings["Port"];
                             if (item[0].Equals("Printer"))
                             {
-                                var value = ConfigurationManager.AppSettings[item];
                                 string[] Numpart = value.Split(':');
                                 if (request.LocalEndPoint.Port == int.Parse(Numpart[0]))
                                 {
